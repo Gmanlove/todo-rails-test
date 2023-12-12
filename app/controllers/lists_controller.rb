@@ -1,51 +1,69 @@
 class ListsController < ApplicationController
+  before_action :set_list, only: [:show, :edit, :update, :destroy]
+  respond_to :html, :json
+
   # GET /lists
   def index
     @lists = List.all
+    respond_with @lists
   end
 
   # GET /lists/1
   def show
     @list = List.find(params[:id])
+    @tasks = @list.tasks.order(due_date: :asc)
+    
+    flash[:notice] = 'Your flash message here' if request.format.html?
+    
+    respond_to do |format|
+      format.html
+      format.json { render json: @list }
+    end
   end
 
   # GET /lists/new
   def new
     @list = List.new
+    respond_with @list
   end
 
   # GET /lists/1/edit
   def edit
-    @list = List.find(params[:id])
+    respond_with @list
   end
 
   # POST /lists
   def create
-    @list = List.new(params[:list])
-
+    @list = List.new(list_params)
     if @list.save
-      redirect_to @list, notice: 'List was successfully created.'
+      respond_with @list
     else
-      render action: "new"
+      respond_with @list.errors, status: :unprocessable_entity
     end
   end
 
   # PUT /lists/1
   def update
-    @list = List.find(params[:id])
-
-    if @list.update_attributes(params[:list])
-      redirect_to @list, notice: 'List was successfully updated.'
+    if @list.update(list_params)
+      respond_with @list
     else
-      render action: "edit"
+      respond_with @list.errors, status: :unprocessable_entity
     end
   end
 
   # DELETE /lists/1
   def destroy
-    @list = List.find(params[:id])
     @list.destroy
+    respond_with @list
+  end
 
-    redirect_to lists_url
+  private
+
+  def set_list
+    @list = List.find(params[:id])
+  end
+
+  def list_params
+    params.require(:list).permit(:title) # Add other permitted attributes here
   end
 end
